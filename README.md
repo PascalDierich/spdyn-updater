@@ -37,7 +37,7 @@ The spdyn-updater supports IPv4 and IPv6.
 5. Write the `host.json` file.
 Either in `.spdyn/` or redefine the path with the `-h` flag.
 
-6. Create a cronjob with
-`EDITOR=vim crontab -e` 
-and add something like<br>
-`*/10 * * * * /home/user/.spdyn/spdyn-updater`
+6. Add CronJob (_as root_) to `/etc/crontab`.<br>
+To check every 10 min, use:<br>
+`*/10 * * * * user /home/user/.spdyn/spdyn-updater`
+
