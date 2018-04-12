@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/user"
 	"time"
 	"unicode"
 )
@@ -210,12 +209,8 @@ func updateIP() error {
 
 // getHomeDir return the path to the user's home directory.
 func getHomeDir() (dir string, err error) {
-	u, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	if dir = u.HomeDir; dir == "" {
+	dir = os.Getenv("HOME")
+	if dir == "" {
 		err = errors.New("No HomeDir")
 	}
 	return
