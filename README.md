@@ -15,7 +15,7 @@ Write a `host.json` file with your server configurations which looks like this:
    "host":"your.host.com",
    "user":"user@example.com",
    "password":"password",
-   "isToken":false
+   "isToken":(true, false)
 }
 ```
 
