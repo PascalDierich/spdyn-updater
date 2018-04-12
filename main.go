@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/user"
 	"time"
 	"unicode"
 )
@@ -19,6 +20,10 @@ const (
 	dnsHost    string = "http://checkip.spdyn.de"
 	logFmt     string = "\t%s\n"
 	logTimeRFC string = time.RFC3339
+	spdynDir   string = "/.spdyn/"
+	hostName   string = "host.json"
+	ipName     string = "spdynuIP.cnf"
+	logName    string = "spdynu.log"
 )
 
 var lastKnownIP net.IP
@@ -33,17 +38,28 @@ var removeCtrlChars = func(b []byte) []byte {
 }
 
 var u = flag.String("u", "update.spdyn.de", "updateHost")
-var h = flag.String("h", "host.json", "hostFile")
-var i = flag.String("i", "spdynuIP.cnf", "IPFile")
-var l = flag.String("l", "spdynu.log", "logFile")
+var d = flag.String("d", "", "spdynDirectory") // default is ${HOME}/.spdyn/
 
 func main() {
 	flag.Parse()
+
+	// Get Flags
 	updateTo := *u
-	hostfPath := *h
+	dir := *d
+	if dir == "" {
+		d, err := getHomeDir()
+		if err != nil {
+			panic(err)
+		} else {
+			dir = d + spdynDir
+		}
+	}
+	hostPath := dir + hostName
+	logPath := dir + logName
+	ipPath := dir + ipName
 
 	// Open logfile.
-	logf, err := os.OpenFile(*l, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	logf, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +76,7 @@ func main() {
 	}
 
 	// Get old and current IP.
-	if err = getStoredIP(); err != nil {
+	if err = getStoredIP(ipPath); err != nil {
 		logStart()
 		log(err.Error())
 		os.Exit(-1)
@@ -79,7 +95,7 @@ func main() {
 	logStart()
 
 	// Open host file (.json).
-	hostf, err := os.Open(hostfPath)
+	hostf, err := os.Open(hostPath)
 	if err != nil {
 		log(err.Error())
 		os.Exit(-1)
@@ -117,22 +133,22 @@ func main() {
 	}
 
 	// Store current IP.
-	err = storeIP()
+	err = storeIP(ipPath)
 	if err != nil {
 		log(err.Error())
 		os.Exit(-1)
 	}
 }
 
-// storeIP writes field `lastKnownIP` to IPFile.
-func storeIP() error {
-	err := os.Remove(*i)
+// storeIP writes field `lastKnownIP` to path `p`.
+func storeIP(p string) error {
+	err := os.Remove(p)
 	if err != nil {
 		// we need to return here, otherwise os.Create truncates to existing file.
 		return err
 	}
 
-	f, err := os.Create(*i)
+	f, err := os.Create(p)
 	if err != nil {
 		return err
 	}
@@ -145,11 +161,11 @@ func storeIP() error {
 	return nil
 }
 
-// getStoredIP sets field `lastKnownIP` to stored IP, read from IPFile.
-func getStoredIP() error {
-	ipFile, err := os.Open(*i)
+// getStoredIP sets field `lastKnownIP` to stored IP, read from path `p`.
+func getStoredIP(p string) error {
+	ipFile, err := os.Open(p)
 	if err != nil {
-		f, err := os.Create(*i)
+		f, err := os.Create(p)
 		if err != nil {
 			return err
 		}
@@ -190,4 +206,17 @@ func updateIP() error {
 	}
 	lastKnownIP = newIP
 	return nil
+}
+
+// getHomeDir return the path to the user's home directory.
+func getHomeDir() (dir string, err error) {
+	u, err := user.Current()
+	if err != nil {
+		return
+	}
+
+	if dir = u.HomeDir; dir == "" {
+		err = errors.New("No HomeDir")
+	}
+	return
 }
