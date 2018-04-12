@@ -31,7 +31,11 @@ func (h *Host) Update(to string, myIP string, ch chan<- string) {
 	}
 
 	req.Host = to
-	req.SetBasicAuth(h.User, h.Pwd)
+	if h.IsToken {
+		req.SetBasicAuth(h.HostName, h.Pwd)
+	} else {
+		req.SetBasicAuth(h.User, h.Pwd)
+	}
 
 	c := &http.Client{}
 	resp, err := c.Do(req)
