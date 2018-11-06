@@ -1,4 +1,23 @@
-// Spdyn-Updater
+// Spdyn-Updater is an update client for the spDYN Dynamic-DNS-Service.
+//
+// Create a folder and specify the location with the ``-d`` flag,
+// default is ``${HOME}/.spdyn`` and specify a ``host.json`` file
+// with following fields.
+//
+//		{ updateHost, host, user, password, isToken }
+//
+// Setup for Raspberry Pi
+//
+// Cross compile the code with
+//		env GOOS=linux GOENV=arch go build
+//
+// Move the binary into the ``.spdyn/`` folder in the RasPi's
+// home directory and add the ``host.json``.
+//
+// Add a CronJob, as root to ``/etc/crontab``,
+// to check every 10 min, use:
+//		*/10 * * * * <user> /home/<user>/.spdyn/spdyn-updater
+//
 package main
 
 import (
@@ -26,7 +45,6 @@ const (
 )
 
 var lastKnownIP net.IP
-
 var removeCtrlChars = func(b []byte) []byte {
 	for i, c := range b {
 		if unicode.IsControl(rune(c)) {
